@@ -1,0 +1,27 @@
+# eclipse stuff
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+**/*.rvm
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+
+# maven stuff
+target/
+bin/
+/bin
+/bin
+/bin
+/bin
+/bin
+/bin
+/bin
+
+.DS_Store
+/.apt_generated/
