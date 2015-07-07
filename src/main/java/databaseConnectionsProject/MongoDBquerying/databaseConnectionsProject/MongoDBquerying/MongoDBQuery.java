@@ -16,12 +16,12 @@ import static com.mongodb.client.model.Projections.*;
 public class MongoDBQuery {
 	
 	//add static String constants to define the relational operators
-	public static final String EQUAL_TO = "=";
-	public static final String NOT_EQUAL_TO = "!=";
-	public static final String LESS_THAN = "<";
-	public static final String LESS_THAN_OR_EQUAL_TO = "<=";
-	public static final String GREATER_THAN = ">";
-	public static final String GREATER_THAN_OR_EQUAL_TO = ">=";
+//	public static final String EQUAL_TO = "=";
+//	public static final String NOT_EQUAL_TO = "!=";
+//	public static final String LESS_THAN = "<";
+//	public static final String LESS_THAN_OR_EQUAL_TO = "<=";
+//	public static final String GREATER_THAN = ">";
+//	public static final String GREATER_THAN_OR_EQUAL_TO = ">=";
 	
 	private MongoDatabase db;
 	private MongoCollection<Document> c;
@@ -46,10 +46,11 @@ public class MongoDBQuery {
 	}
 	
 	
-	public void execute() {
+	public List<Document> execute() {
 		List<Document> all = c.find(this.filter).projection(this.projection).into(new ArrayList<Document>());
 		//print list?
 		this.client.close();
+		return all;
 	}
 	
 	public static class Builder {
@@ -71,6 +72,10 @@ public class MongoDBQuery {
 			
 			return new MongoDBQuery(this.dbName, this.collectionName, this.fields, this.includeID, this.filter); //placeholder?
 		}
+		public Builder setDatabase(String databaseName){
+			this.dbName = databaseName;
+			return this;
+		}
 		public Builder setCollection(String collectionName){
 			this.collectionName = collectionName;
 			return this;
@@ -88,72 +93,123 @@ public class MongoDBQuery {
 			return this;
 		}
 		
-		public Builder addSearchFilter(String field, String relation, String value){
+		public Builder addSearchFilter(String field, Operator relation, String value){
 			Bson newFilter = null;
-			if(relation.equals(EQUAL_TO)){
-				newFilter = eq(field, value);
-			} else if(relation.equals(LESS_THAN_OR_EQUAL_TO)){
-				newFilter = lte(field, value);
-			} else if(relation.equals(GREATER_THAN_OR_EQUAL_TO)){
-				newFilter = gte(field, value);
-			} else if(relation.equals(LESS_THAN)){
-				newFilter = lt(field, value);
-			} else if(relation.equals(GREATER_THAN)){
-				newFilter = gt(field, value);
-			} else if(relation.equals(NOT_EQUAL_TO)){
-				newFilter = ne(field, value);
+			switch(relation){
+				case EQUAL_TO :{
+					newFilter = eq(field, value);
+					break;
+				} 
+				case LESS_THAN_OR_EQUAL_TO :{
+					newFilter = lte(field, value);
+					break;
+				} 
+				case GREATER_THAN_OR_EQUAL_TO :{
+					newFilter = gte(field, value);
+					break;
+				} 
+				case LESS_THAN : {
+					newFilter = lt(field, value);
+					break;
+				} 
+				case GREATER_THAN:{
+					newFilter = gt(field, value);
+					break;
+				} case NOT_EQUAL_TO:{
+					newFilter = ne(field, value);
+					break;
+				}
+				default : {
+					break;
+				}
 			}
+			
 			if(this.filter != null){
 				this.filter = and(this.filter, newFilter);
 			} else {
 				this.filter = newFilter;
 			}
+			
 			return this;
 		}
 		
-		public Builder addSearchFilter(String field, String relation, float value){
+		public Builder addSearchFilter(String field, Operator relation, float value){
 			Bson newFilter = null;
-			if(relation.equals(EQUAL_TO)){
-				newFilter = eq(field, value);
-			} else if(relation.equals(LESS_THAN_OR_EQUAL_TO)){
-				newFilter = lte(field, value);
-			} else if(relation.equals(GREATER_THAN_OR_EQUAL_TO)){
-				newFilter = gte(field, value);
-			} else if(relation.equals(LESS_THAN)){
-				newFilter = lt(field, value);
-			} else if(relation.equals(GREATER_THAN)){
-				newFilter = gt(field, value);
-			} else if(relation.equals(NOT_EQUAL_TO)){
-				newFilter = ne(field, value);
+			switch(relation){
+				case EQUAL_TO :{
+					newFilter = eq(field, value);
+					break;
+				} 
+				case LESS_THAN_OR_EQUAL_TO :{
+					newFilter = lte(field, value);
+					break;
+				} 
+				case GREATER_THAN_OR_EQUAL_TO :{
+					newFilter = gte(field, value);
+					break;
+				} 
+				case LESS_THAN : {
+					newFilter = lt(field, value);
+					break;
+				} 
+				case GREATER_THAN:{
+					newFilter = gt(field, value);
+					break;
+				} case NOT_EQUAL_TO:{
+					newFilter = ne(field, value);
+					break;
+				}
+				default : {
+					break;
+				}
 			}
+			
 			if(this.filter != null){
 				this.filter = and(this.filter, newFilter);
 			} else {
 				this.filter = newFilter;
 			}
+			
 			return this;
 		}
 		
-		public Builder addSearchFilter(String field, String relation, boolean value){
+		public Builder addSearchFilter(String field, Operator relation, boolean value){
 			Bson newFilter = null;
-			if(relation.equals(EQUAL_TO)){
-				newFilter = eq(field, value);
-			} else if(relation.equals(LESS_THAN_OR_EQUAL_TO)){
-				newFilter = lte(field, value);
-			} else if(relation.equals(GREATER_THAN_OR_EQUAL_TO)){
-				newFilter = gte(field, value);
-			} else if(relation.equals(LESS_THAN)){
-				newFilter = lt(field, value);
-			} else if(relation.equals(GREATER_THAN)){
-				newFilter = gt(field, value);
-			} else if(relation.equals(NOT_EQUAL_TO)){
-				newFilter = ne(field, value);
+			switch(relation){
+				case EQUAL_TO :{
+					newFilter = eq(field, value);
+					break;
+				} 
+				case LESS_THAN_OR_EQUAL_TO :{
+					newFilter = lte(field, value);
+					break;
+				} 
+				case GREATER_THAN_OR_EQUAL_TO :{
+					newFilter = gte(field, value);
+					break;
+				} 
+				case LESS_THAN : {
+					newFilter = lt(field, value);
+					break;
+				} 
+				case GREATER_THAN:{
+					newFilter = gt(field, value);
+					break;
+				} case NOT_EQUAL_TO:{
+					newFilter = ne(field, value);
+					break;
+				}
+				default : {
+					break;
+				}
 			}
+			
 			if(this.filter != null){
 				this.filter = and(this.filter, newFilter);
 			} else {
 				this.filter = newFilter;
 			}
+			
 			return this;
 		}
 		
