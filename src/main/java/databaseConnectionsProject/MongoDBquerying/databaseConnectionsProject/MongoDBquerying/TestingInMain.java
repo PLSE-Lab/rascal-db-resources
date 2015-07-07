@@ -1,15 +1,19 @@
 package databaseConnectionsProject.MongoDBquerying.databaseConnectionsProject.MongoDBquerying;
 
 import java.sql.SQLException;
+import java.util.List;
+
+import org.bson.Document;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 
 public class TestingInMain {
-	public static void main(String[] args){
-		 MongoClient mc = new MongoClient();
-		 MongoDatabase db = mc.getDatabase("test");
+public static void main(String[] args){
 		
+        testingMySQL();
+        testingMongo();
+        
 	}
 	
 	public static void testingMySQL(){
@@ -36,6 +40,15 @@ public class TestingInMain {
 	}
 	
 	public static void testingMongo(){
-		
+		MongoDBQuery.Builder builder = new MongoDBQuery.Builder();
+        builder.setDatabase("test");
+        builder.setCollection("insertTest");
+        builder.getFields("i");
+        builder.addSearchFilter("x", Operator.EQUAL_TO, 0);
+        MongoDBQuery query = builder.build();
+        List<Document> results = query.execute();
+        for(Document current: results){
+        	System.out.println(current);
+        }
 	}
 }
