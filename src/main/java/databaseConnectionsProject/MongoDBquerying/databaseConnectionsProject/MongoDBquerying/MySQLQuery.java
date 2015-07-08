@@ -36,24 +36,12 @@ public class MySQLQuery {
 		return this.query;
 	}
 	/*
-	 * I want to return something, but not a ResultSet
-	 * Maybe return a Map? (Java maps are weird though) (Maybe I can make my own?)
+	 * TODO: return  ResultSet
+	 * 
 	 */
-	public void execute() throws SQLException{
-		ResultSet rs = stmt.executeQuery(this.query);
-		ResultSetMetaData rsMeta = rs.getMetaData();
-		int numberOfColumns = rsMeta.getColumnCount();
-		String[] columnNames = new String[numberOfColumns];
-		for(int i = 0; i < numberOfColumns; i++){
-			columnNames[i] = rsMeta.getColumnName(i+1);
-		}
+	public ResultSet execute() throws SQLException{
+		return stmt.executeQuery(this.query);
 		
-		while(rs.next()){
-			for(int i = 0; i < numberOfColumns; i++){
-				//Do something other than print?
-				System.out.println(columnNames[i] + ": " + rs.getString(i+1)); 
-			}
-		}
 	}
 	
 	public static class Builder {
