@@ -6,14 +6,24 @@ import java.util.List;
 import org.bson.Document;
 
 import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 public class TestingInMain {
-public static void main(String[] args){
-		
-        testingMySQL();
-        testingMongo();
+	public static void main(String[] args){
+		UnifiedBuilder builder = new UnifiedBuilder();
+		builder.setMongoConnectionInfo("", "test", "", "");
         
+        builder.setCollection("insertTest");
+        builder.getAttribute("i");
+        builder.addSearchFilter("x", Operator.EQUAL_TO, 0);
+        MongoDBQuery query = builder.build();
+        List<Document> results = query.execute();
+        for(Document current: results){
+        	System.out.println(current);
+        }
+        System.out.println("Under this comes from working code: "); 
+		testingMongo();
 	}
 	
 	public static void testingMySQL(){
@@ -50,5 +60,23 @@ public static void main(String[] args){
         for(Document current: results){
         	System.out.println(current);
         }
+	}
+	
+	public static void testingUnifiedMySQLPart(){
+		UnifiedBuilder builder = new UnifiedBuilder();
+        String mysqlHost = "localhost";
+		String mysqlDbName = "feedback";
+		String mysqlUser = "sqluser";
+		String mysqlPassword = "sqluserpw";
+        builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
+        builder.setTable("comments");
+        builder.getAttribute("summary", "email", "comments");
+        
+		builder.addSearchFilter("id", Operator.EQUAL_TO, "1");
+		MySQLQuery query = builder.buildMySQL(); //probably need to change again
+		System.out.println(query.toString());
+	}
+	public static void testingUnified(){
+		
 	}
 }

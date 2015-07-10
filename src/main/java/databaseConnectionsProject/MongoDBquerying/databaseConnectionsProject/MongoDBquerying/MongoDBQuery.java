@@ -1,7 +1,9 @@
 package databaseConnectionsProject.MongoDBquerying.databaseConnectionsProject.MongoDBquerying;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -31,14 +33,16 @@ public class MongoDBQuery {
 	
 	
 	
-	MongoDBQuery(String dbName, String collectionName, String[] projectionFields, boolean id, Bson filters){
+	MongoDBQuery(String dbName, String collectionName, Set<String> projectionFields, boolean id, Bson filters){
 		this.client = new MongoClient();
 		this.db = client.getDatabase(dbName);
 		this.c = db.getCollection(collectionName);
+		String[] temp = new String[projectionFields.size()]; 
+		temp = projectionFields.toArray(temp);
 		if(id){
-			this.projection = fields(include(projectionFields));
+			this.projection = fields(include(temp));
 		} else{
-			this.projection = fields(include(projectionFields), excludeId());
+			this.projection = fields(include(temp), excludeId());
 		}
 		this.filter = filters;
 		
@@ -56,7 +60,7 @@ public class MongoDBQuery {
 	public static class Builder {
 		private String dbName;
 		private String collectionName;
-		private String[] fields; //projection fields
+		private Set<String> fields = new HashSet<String>(); //projection fields
 		private boolean includeID;
 		private Bson filter;
 		
@@ -69,7 +73,6 @@ public class MongoDBQuery {
 		
 		public MongoDBQuery build(){
 			//assemble
-			
 			return new MongoDBQuery(this.dbName, this.collectionName, this.fields, this.includeID, this.filter); //placeholder?
 		}
 		public Builder setDatabase(String databaseName){
@@ -83,7 +86,9 @@ public class MongoDBQuery {
 		
 		
 		public Builder getFields(String ... args){
-			this.fields = args;			
+			for(int i = 0; i < args.length; i++){
+				this.fields.add(args[i]);
+			}
 			return this;
 		}
 		

@@ -35,10 +35,7 @@ public class MySQLQuery {
 		
 		return this.query;
 	}
-	/*
-	 * TODO: return  ResultSet
-	 * 
-	 */
+	
 	public ResultSet execute() throws SQLException{
 		return stmt.executeQuery(this.query);
 		
