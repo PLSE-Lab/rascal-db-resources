@@ -11,19 +11,7 @@ import com.mongodb.client.MongoDatabase;
 
 public class TestingInMain {
 	public static void main(String[] args){
-		UnifiedBuilder builder = new UnifiedBuilder();
-		builder.setMongoConnectionInfo("", "test", "", "");
-        
-        builder.setCollection("insertTest");
-        builder.getAttribute("i");
-        builder.addSearchFilter("x", Operator.EQUAL_TO, 0);
-        MongoDBQuery query = builder.build();
-        List<Document> results = query.execute();
-        for(Document current: results){
-        	System.out.println(current);
-        }
-        System.out.println("Under this comes from working code: "); 
-		testingMongo();
+		
 	}
 	
 	public static void testingMySQL(){
@@ -44,7 +32,6 @@ public class TestingInMain {
 		try {
 			query.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -72,11 +59,34 @@ public class TestingInMain {
         builder.setTable("comments");
         builder.getAttribute("summary", "email", "comments");
         
-		builder.addSearchFilter("id", Operator.EQUAL_TO, "1");
+		//builder.addSearchFilter("id", Operator.EQUAL_TO, "1");
+		//builder.addSearchFilter("myuser", Operator.EQUAL_TO, "lars");
 		MySQLQuery query = builder.buildMySQL(); //probably need to change again
 		System.out.println(query.toString());
+		try {
+			query.execute();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
+	
+	public static void testingUnifiedMongoPart(){
+		UnifiedBuilder builder = new UnifiedBuilder();
+		builder.setMongoConnectionInfo("", "test", "", "");
+        
+        builder.setCollection("insertTest");
+        builder.getAttribute("i");
+        //builder.addSearchFilter("x", Operator.EQUAL_TO, 0);
+        //builder.addSearchFilter("i", Operator.LESS_THAN_OR_EQUAL_TO, 12);
+        MongoDBQuery query = builder.buildMongo();
+        List<Document> results = query.execute();
+        for(Document current: results){
+        	System.out.println(current);
+        }
+	}
+	
 	public static void testingUnified(){
-		
+		testingUnifiedMySQLPart();
+		testingUnifiedMongoPart();
 	}
 }

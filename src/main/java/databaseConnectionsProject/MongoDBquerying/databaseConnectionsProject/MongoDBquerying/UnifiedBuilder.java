@@ -1,15 +1,8 @@
 package databaseConnectionsProject.MongoDBquerying.databaseConnectionsProject.MongoDBquerying;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.gt;
-import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Filters.lt;
-import static com.mongodb.client.model.Filters.lte;
-import static com.mongodb.client.model.Filters.ne;
+import static com.mongodb.client.model.Filters.*;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -18,9 +11,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -72,6 +63,12 @@ public class UnifiedBuilder {
 	private boolean includeID = false;
 	private String mongoCollectionName;
 	
+	private boolean lastAdded;
+	
+	private MySQLQuery mysqlQuery;
+	private MongoDBQuery mongoQuery;
+	
+	private boolean built = false;
 	
 	public UnifiedBuilder setMysqlConnectionInfo(String mysqlHost, String mysqlDbName, String mysqlUser, String mysqlPassword) {
 		this.mysqlHost = mysqlHost;
@@ -105,14 +102,28 @@ public class UnifiedBuilder {
 		
 		return this;
 	}
-
+	
+	public void build(){
+		this.mysqlQuery = buildMySQL();
+		this.mongoQuery = buildMongo();
+		this.built = true;
+	}
 	/*
-	 * TODO: Change return type and what's returned 
-	 * Still using this to check to make sure SQL statement is right
-	 * 
-	 * Maybe make a MySQLQuery and a MongoQuery member of the class that can be accessed outside? Add methods to retrieve those?
-	 * 
+	 * TODO:
+	 * I want to be able to return both the ResultSet and the List
+	 * 	-Maybe make a new class that contains both? 
+	 *  -Find a way to merge them?
+	 *  -Just make fields with get methods?
 	 */
+	public void execute() throws Exception{ //should I throw or handle the exception here? 
+		if(built){
+			ResultSet rs = this.mysqlQuery.execute();
+			List<Document> results = this.mongoQuery.execute();
+		} else {
+			System.err.println("UnifiedBuilder has not been built yet");
+		}
+	}
+	//TODO: make private and update TestingInMain
 	public MySQLQuery buildMySQL(){
 		//assemble string
 		this.query = SELECT_SPECIFIC;
@@ -137,20 +148,19 @@ public class UnifiedBuilder {
 			if(this.mysqlFiltersAdded != 0 && i == this.mysqlFiltersAdded - 1){
 				//take off the last ", "
 				this.query += " ";
-				this.query = this.query.substring(0, this.query.length() - 3); 
-				
-				
+				if(this.lastAdded){
+					this.query = this.query.substring(0, this.query.length() - 6); 
+				} else {
+					this.query = this.query.substring(0, this.query.length() - 5);
+				}
 			}
 			
 		}
 		this.query += ";";
 		return new MySQLQuery(this.mysqlHost, this.mysqlDbName, this.mysqlUser, this.mysqlPassword, this.query);
 	}
-	/*
-	 * TODO: Change return type and what's returned 
-	 * Still using this to check to make sure Mongo statement is right
-	 */
-	public MongoDBQuery build(){
+	//TODO: make private and update TestingInMain
+	public MongoDBQuery buildMongo(){
 		return new MongoDBQuery(this.mongoDbName, this.mongoCollectionName, this.mongoProjectionFields , this.includeID , this.mongoFilter);
 	}
 	
@@ -178,7 +188,6 @@ public class UnifiedBuilder {
 				 } 
 				 
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -210,13 +219,20 @@ public class UnifiedBuilder {
 		
 		return this;
 	}
-	//TODO: MySQL uses AND to separate WHERE clause stuff right?
-	public UnifiedBuilder addSearchFilter(String field, Operator relation, String value){
+	/*
+	 * Added boolean parameter to choose and/or  (could have a better name?)
+	 */
+	public UnifiedBuilder addStringFilter(String field, Operator relation, String value, boolean both){
+		
 		if(this.mysqlColumnNames.contains(field)){
-			this.mysqlWhere.add(field + relation.toString() + value + ", ");
+			if(both){
+				this.mysqlWhere.add(field + relation.toString() + "\'" + value + "\'" + " AND ");
+			} else {
+				this.mysqlWhere.add(field + relation.toString() + "\'" + value + "\'" + " OR ");
+			}
 			this.mysqlFiltersAdded++;
+			this.lastAdded = both;
 		}else{
-			//TODO: handle Mongo stuff
 			Bson newFilter = null;
 			switch(relation){
 				case EQUAL_TO :{
@@ -248,7 +264,12 @@ public class UnifiedBuilder {
 			}
 			 
 			if(this.mongoFilter != null){
-				this.mongoFilter = and(this.mongoFilter, newFilter);
+				if(both){
+					this.mongoFilter = and(this.mongoFilter, newFilter);
+				} else {
+					
+					this.mongoFilter = or(this.mongoFilter, newFilter);
+				}
 			} else {
 				this.mongoFilter = newFilter;
 			}
@@ -257,59 +278,65 @@ public class UnifiedBuilder {
 		return this;
 	}
 	
-	/* 
-	 * TODO: MySQL uses AND to separate WHERE clause stuff right?
-	 * need to have because it wasn't working if I had a string of a number, 
-	 * maybe be able to parse a string to have only one method?
-	 */
-		public UnifiedBuilder addSearchFilter(String field, Operator relation, float value){
-			if(this.mysqlColumnNames.contains(field)){
-				this.mysqlWhere.add(field + relation.toString() + value + ", ");
-				this.mysqlFiltersAdded++;
-			}else{
-				//TODO: handle Mongo stuff
-				Bson newFilter = null;
-				switch(relation){
-					case EQUAL_TO :{
-						newFilter = eq(field, value);
-						break;
-					} 
-					case LESS_THAN_OR_EQUAL_TO :{
-						newFilter = lte(field, value);
-						break;
-					} 
-					case GREATER_THAN_OR_EQUAL_TO :{
-						newFilter = gte(field, value);
-						break;
-					} 
-					case LESS_THAN : {
-						newFilter = lt(field, value);
-						break;
-					} 
-					case GREATER_THAN:{
-						newFilter = gt(field, value);
-						break;
-					} case NOT_EQUAL_TO:{
-						newFilter = ne(field, value);
-						break;
-					}
-					default : {
-						break;
-					}
+	public UnifiedBuilder addNumericalFilter(String field, Operator relation, float value, boolean both){
+		if(this.mysqlColumnNames.contains(field)){
+			if(both){
+				this.mysqlWhere.add(field + relation.toString() + "\'" + value + "\'" + " AND ");
+			} else {
+				this.mysqlWhere.add(field + relation.toString() + "\'" + value + "\'" + " OR ");
+			}
+			this.mysqlFiltersAdded++;
+			this.lastAdded = both;
+		}else{
+			
+			Bson newFilter = null;
+			switch(relation){
+				case EQUAL_TO :{
+					newFilter = eq(field, value);
+					break;
+				} 
+				case LESS_THAN_OR_EQUAL_TO :{
+					newFilter = lte(field, value);
+					break;
+				} 
+				case GREATER_THAN_OR_EQUAL_TO :{
+					newFilter = gte(field, value);
+					break;
+				} 
+				case LESS_THAN : {
+					newFilter = lt(field, value);
+					break;
+				} 
+				case GREATER_THAN:{
+					newFilter = gt(field, value);
+					break;
+				} case NOT_EQUAL_TO:{
+					newFilter = ne(field, value);
+					break;
 				}
-				 
-				if(this.mongoFilter != null){
+				default : {
+					break;
+				}
+			}
+			 
+			if(this.mongoFilter != null){
+				if(both){
 					this.mongoFilter = and(this.mongoFilter, newFilter);
 				} else {
-					this.mongoFilter = newFilter;
+					
+					this.mongoFilter = or(this.mongoFilter, newFilter);
 				}
-				 
+			} else {
+				this.mongoFilter = newFilter;
 			}
-			return this;
+			 
 		}
+		return this;
+	}
 	
 	/*
 	 * MySQL method (replaced? by getAttribute)
+	 * should be able to delete
 	 */
 	public UnifiedBuilder getColumn(String ... args){
 		columnsAdded += args.length;
@@ -320,6 +347,7 @@ public class UnifiedBuilder {
 	}
 	/*
 	 * MySQL method (replace? with addSearchFilter?)
+	 * should be able to delete
 	 */
 	public UnifiedBuilder where(String whereClause){
 		this.mysqlClauses.add(" WHERE " + whereClause);
