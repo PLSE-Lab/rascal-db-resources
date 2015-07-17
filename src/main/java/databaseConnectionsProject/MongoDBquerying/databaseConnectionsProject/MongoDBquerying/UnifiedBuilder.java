@@ -70,6 +70,10 @@ public class UnifiedBuilder {
 	
 	private boolean built = false;
 	
+	private ResultSet mysqlResultSet = null;
+	private List<Document> mongoResults = null;
+	
+	
 	public UnifiedBuilder setMysqlConnectionInfo(String mysqlHost, String mysqlDbName, String mysqlUser, String mysqlPassword) {
 		this.mysqlHost = mysqlHost;
 		this.mysqlDbName = mysqlDbName;
@@ -104,27 +108,37 @@ public class UnifiedBuilder {
 	}
 	
 	public void build(){
-		this.mysqlQuery = buildMySQL();
-		this.mongoQuery = buildMongo();
+		if(this.mysqlConfigured){
+			this.mysqlQuery = buildMySQL();
+		}
+		if(this.mongoConfigured){
+			this.mongoQuery = buildMongo();
+		}
 		this.built = true;
 	}
-	/*
-	 * TODO:
-	 * I want to be able to return both the ResultSet and the List
-	 * 	-Maybe make a new class that contains both? 
-	 *  -Find a way to merge them?
-	 *  -Just make fields with get methods?
-	 */
+	
 	public void execute() throws Exception{ //should I throw or handle the exception here? 
 		if(built){
-			ResultSet rs = this.mysqlQuery.execute();
-			List<Document> results = this.mongoQuery.execute();
+			if(this.mysqlConfigured){
+				this.mysqlResultSet = this.mysqlQuery.execute();
+			}
+			if(this.mongoConfigured){
+				this.mongoResults = this.mongoQuery.execute();
+			}
 		} else {
 			System.err.println("UnifiedBuilder has not been built yet");
 		}
 	}
+	
+	public ResultSet getMySQL(){
+		return this.mysqlResultSet;
+	}
+	public List<Document> getMongo(){
+		return this.mongoResults;
+	}
+	
 	//TODO: make private and update TestingInMain
-	public MySQLQuery buildMySQL(){
+	private MySQLQuery buildMySQL(){
 		//assemble string
 		this.query = SELECT_SPECIFIC;
 		
@@ -160,7 +174,7 @@ public class UnifiedBuilder {
 		return new MySQLQuery(this.mysqlHost, this.mysqlDbName, this.mysqlUser, this.mysqlPassword, this.query);
 	}
 	//TODO: make private and update TestingInMain
-	public MongoDBQuery buildMongo(){
+	private MongoDBQuery buildMongo(){
 		return new MongoDBQuery(this.mongoDbName, this.mongoCollectionName, this.mongoProjectionFields , this.includeID , this.mongoFilter);
 	}
 	

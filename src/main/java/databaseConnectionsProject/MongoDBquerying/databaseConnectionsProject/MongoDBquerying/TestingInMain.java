@@ -1,5 +1,6 @@
 package databaseConnectionsProject.MongoDBquerying.databaseConnectionsProject.MongoDBquerying;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -11,7 +12,7 @@ import com.mongodb.client.MongoDatabase;
 
 public class TestingInMain {
 	public static void main(String[] args){
-		
+		testingUnified();
 	}
 	
 	public static void testingMySQL(){
@@ -61,13 +62,13 @@ public class TestingInMain {
         
 		//builder.addSearchFilter("id", Operator.EQUAL_TO, "1");
 		//builder.addSearchFilter("myuser", Operator.EQUAL_TO, "lars");
-		MySQLQuery query = builder.buildMySQL(); //probably need to change again
-		System.out.println(query.toString());
+		builder.build(); 
 		try {
-			query.execute();
-		} catch (SQLException e) {
+			builder.execute();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		ResultSet rs = builder.getMySQL();
 	}
 	
 	public static void testingUnifiedMongoPart(){
@@ -78,8 +79,13 @@ public class TestingInMain {
         builder.getAttribute("i");
         //builder.addSearchFilter("x", Operator.EQUAL_TO, 0);
         //builder.addSearchFilter("i", Operator.LESS_THAN_OR_EQUAL_TO, 12);
-        MongoDBQuery query = builder.buildMongo();
-        List<Document> results = query.execute();
+        builder.build();
+        try {
+			builder.execute();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        List<Document> results = builder.getMongo();
         for(Document current: results){
         	System.out.println(current);
         }
