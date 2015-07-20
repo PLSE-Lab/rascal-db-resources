@@ -51,7 +51,16 @@ public class MongoDBQuery {
 	
 	
 	public List<Document> execute() {
-		List<Document> all = c.find(this.filter).projection(this.projection).into(new ArrayList<Document>());
+		List<Document> all = null;
+		if(this.filter == null && this.projection == null){
+			all = c.find().into(new ArrayList<Document>());
+		} else if(this.filter == null && this.projection != null){
+			all = c.find().projection(this.projection).into(new ArrayList<Document>());
+		} else if(this.filter != null && this.projection == null){
+			all = c.find(this.filter).into(new ArrayList<Document>());
+		} else {
+			all = c.find(this.filter).projection(this.projection).into(new ArrayList<Document>());
+		}
 		//print list?
 		this.client.close();
 		return all;

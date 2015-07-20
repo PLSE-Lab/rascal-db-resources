@@ -60,8 +60,8 @@ public class TestingInMain {
         builder.setTable("comments");
         builder.getAttribute("summary", "email", "comments");
         
-		//builder.addSearchFilter("id", Operator.EQUAL_TO, "1");
-		//builder.addSearchFilter("myuser", Operator.EQUAL_TO, "lars");
+		builder.addNumericalFilter("id", Operator.EQUAL_TO, 1, true);
+		builder.addStringFilter("myuser", Operator.EQUAL_TO, "lars", true);
 		builder.build(); 
 		try {
 			builder.execute();
@@ -69,6 +69,7 @@ public class TestingInMain {
 			e.printStackTrace();
 		}
 		ResultSet rs = builder.getMySQL();
+		
 	}
 	
 	public static void testingUnifiedMongoPart(){
@@ -77,8 +78,8 @@ public class TestingInMain {
         
         builder.setCollection("insertTest");
         builder.getAttribute("i");
-        //builder.addSearchFilter("x", Operator.EQUAL_TO, 0);
-        //builder.addSearchFilter("i", Operator.LESS_THAN_OR_EQUAL_TO, 12);
+        builder.addNumericalFilter("x", Operator.EQUAL_TO, 0, true);
+        builder.addNumericalFilter("i", Operator.LESS_THAN_OR_EQUAL_TO, 12, true);
         builder.build();
         try {
 			builder.execute();
