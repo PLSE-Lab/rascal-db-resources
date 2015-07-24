@@ -137,7 +137,6 @@ public class UnifiedBuilder {
 		return this.mongoResults;
 	}
 	
-	//TODO: make private and update TestingInMain
 	private MySQLQuery buildMySQL(){
 		//assemble string
 		this.query = SELECT_SPECIFIC;
@@ -173,7 +172,7 @@ public class UnifiedBuilder {
 		this.query += ";";
 		return new MySQLQuery(this.mysqlHost, this.mysqlDbName, this.mysqlUser, this.mysqlPassword, this.query);
 	}
-	//TODO: make private and update TestingInMain
+	
 	private MongoDBQuery buildMongo(){
 		return new MongoDBQuery(this.mongoDbName, this.mongoCollectionName, this.mongoProjectionFields , this.includeID , this.mongoFilter);
 	}
@@ -195,7 +194,7 @@ public class UnifiedBuilder {
 				 //not sure if this would work or not...
 				 Statement trial = this.mysqlConnection.createStatement();
 				 //is there any way to get just one row to make it more efficient?
-				 rs = trial.executeQuery("SELECT * from " + tableName + ";"); 
+				 rs = trial.executeQuery("SELECT * from " + tableName + " where id=1;"); 
 				 metaData = rs.getMetaData();
 				 for(int i = 1; i <= metaData.getColumnCount(); i++){
 					 this.mysqlColumnNames.add(metaData.getColumnName(i));
@@ -238,7 +237,7 @@ public class UnifiedBuilder {
 	 */
 	public UnifiedBuilder addStringFilter(String field, Operator relation, String value, boolean both){
 		
-		if(this.mysqlColumnNames.contains(field)){
+		if(this.mysqlConfigured && this.mysqlColumnNames.contains(field)){
 			if(both){
 				this.mysqlWhere.add(field + relation.toString() + "\'" + value + "\'" + " AND ");
 			} else {
@@ -293,7 +292,7 @@ public class UnifiedBuilder {
 	}
 	
 	public UnifiedBuilder addNumericalFilter(String field, Operator relation, float value, boolean both){
-		if(this.mysqlColumnNames.contains(field)){
+		if(this.mysqlConfigured && this.mysqlColumnNames.contains(field)){
 			if(both){
 				this.mysqlWhere.add(field + relation.toString() + "\'" + value + "\'" + " AND ");
 			} else {
@@ -301,7 +300,7 @@ public class UnifiedBuilder {
 			}
 			this.mysqlFiltersAdded++;
 			this.lastAdded = both;
-		}else{
+		}
 			
 			Bson newFilter = null;
 			switch(relation){
@@ -344,7 +343,7 @@ public class UnifiedBuilder {
 				this.mongoFilter = newFilter;
 			}
 			 
-		}
+		
 		return this;
 	}
 	

@@ -3,6 +3,8 @@ package databaseConnectionsProject.MongoDBquerying;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +62,7 @@ public class AppTest
     public void test1(){
     	//TODO: Set connection info for GHTorrent
     	String mongoHost = "";
-    	String mongoDbName = "";
+    	String mongoDbName = "github";
     	String mongoUser = "";
     	String mongoPassword = "";
 
@@ -72,7 +74,7 @@ public class AppTest
     	builder.setMongoConnectionInfo(mongoHost, mongoDbName, mongoUser, mongoPassword);
     	builder.setCollection("users");
     	builder.getAttribute("public_repos", "public_gists", "followers", "following"); 
-    	builder.addNumericalFilter("id", Operator.EQUAL_TO, 1, true); //might only work on mysql part as the code is right now
+    	builder.addNumericalFilter("id", Operator.EQUAL_TO, 738779, true); //might only work on mysql part as the code is right now
     	builder.build();
     	
     	//get results from Unified Builder
@@ -87,12 +89,13 @@ public class AppTest
     	MongoClient mongoClient = new MongoClient();
 		MongoDatabase mongoDb = mongoClient.getDatabase(mongoDbName);
 		MongoCollection<Document> coll = mongoDb.getCollection("users");
-		Bson filter = eq("id", 1);
+		Bson filter = eq("id", 738779);
 		Bson projection = fields(include("public_repos", "public_gists", "followers", "following"), excludeId()); 
 		expectedResults = coll.find(filter).projection(projection).into(new ArrayList<Document>());
     	mongoClient.close();
     	//The parameters may be in reverse order 
-    	assertEquals(actualResults, expectedResults); 
+    	assertEquals(expectedResults, actualResults); 
+    	assertTrue(actualResults != null);
     }
     
     /**
@@ -100,20 +103,20 @@ public class AppTest
      */
     public void test2(){
     	//TODO: Set connection info for GHTorrent
-    	String mysqlHost = "";
-    	String mysqlDbName = "";
-    	String mysqlUser = "";
-    	String mysqlPassword = "";
+    	String mysqlHost = "localhost:3306";
+    	String mysqlDbName = "ghtorrent";
+    	String mysqlUser = "java";
+    	String mysqlPassword = "password";
     	
     	ResultSet actualrs = null;
     	ResultSet expectedrs = null;
     	
     	//Using Unified Builder
     	UnifiedBuilder builder = new UnifiedBuilder();
-    	builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
-    	builder.setTable("users");
-    	builder.getAttribute("name", "email", "company", "location"); 
-    	builder.addNumericalFilter("id", Operator.EQUAL_TO, 1, true); //might only work on mysql part as the code is right now
+    	builder = builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
+    	builder = builder.setTable("users");
+    	builder = builder.getAttribute("name", "email", "company", "location");
+    	builder = builder.addNumericalFilter("id", Operator.EQUAL_TO, 1, true); //might only work on mysql part as the code is right now
     	builder.build();
     	
     	//get results from Unified Builder
@@ -123,6 +126,7 @@ public class AppTest
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+    	
     	//get mysql results standard way
     	try {
 			Class.forName("com.mysql.jdbc.Driver"); 
@@ -137,21 +141,35 @@ public class AppTest
 		}
     	
     	//The parameters may be in reverse order 
-    	assertEquals(actualrs, expectedrs); 
+    	//assertEquals(actualrs, expectedrs); 
+    	
+    	try {
+			while(actualrs.next() && expectedrs.next()){
+				for(int i = 1; i <= 4; i++){
+					assertEquals(expectedrs.getString(i), actualrs.getString(i));
+				}
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	assertTrue(actualrs != null);
     }
     
     /**
      * Get a little bit of both 
      * In users, gets name and email from mysql, followers from mongo
      */
+
     public void test3(){
     	//TODO: Set connection info for GHTorrent
-    	String mysqlHost = "";
-    	String mysqlDbName = "";
-    	String mysqlUser = "";
-    	String mysqlPassword = "";
+    	String mysqlHost = "localhost";
+    	String mysqlDbName = "ghtorrent";
+    	String mysqlUser = "java";
+    	String mysqlPassword = "password";
     	String mongoHost = "";
-    	String mongoDbName = "";
+    	String mongoDbName = "github";
     	String mongoUser = "";
     	String mongoPassword = "";
     	
@@ -167,7 +185,8 @@ public class AppTest
     	builder.setCollection("users");
     	builder.setTable("users");
     	builder.getAttribute("name", "email", "followers"); 
-    	builder.addNumericalFilter("id", Operator.EQUAL_TO, 1, true); //might only work on mysql part as the code is right now
+    	builder.addNumericalFilter("id", Operator.EQUAL_TO, 738779, true); //might only work on mysql part as the code is right now
+    	//NOTE: I think ^ is fixed, but leaving comment just in case its not
     	builder.build();
     	
     	//get results from Unified Builder
@@ -184,7 +203,7 @@ public class AppTest
 			Connection c = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + "/" + mysqlDbName 
 					+ "?user=" + mysqlUser + "&password=" + mysqlPassword);
 			Statement stmt = c.createStatement();
-			String query = "SELECT name, email FROM users WHERE id=1"; //should be right
+			String query = "SELECT name, email FROM users WHERE id=738779"; //should be right
 			expectedrs = stmt.executeQuery(query);
 			
 		} catch(Exception e){
@@ -194,22 +213,181 @@ public class AppTest
     	MongoClient mongoClient = new MongoClient();
 		MongoDatabase mongoDb = mongoClient.getDatabase(mongoDbName);
 		MongoCollection<Document> coll = mongoDb.getCollection("users");
-		Bson filter = eq("id", 1);
+		Bson filter = eq("id", 738779);
 		Bson projection = fields(include("followers"), excludeId()); 
 		expectedResults = coll.find(filter).projection(projection).into(new ArrayList<Document>());
     	
     	//The parameters may be in reverse order 
-    	assertEquals(actualrs, expectedrs);
-    	assertEquals(actualResults, expectedResults); 
+		try {
+			while(actualrs.next() && expectedrs.next()){
+				for(int i = 1; i <= 2; i++){
+					assertEquals(expectedrs.getString(i), actualrs.getString(i));
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+    	assertEquals(expectedResults, actualResults); 
+    	assertTrue(actualrs != null);
+    	assertTrue(actualResults != null);
+    	
+    }
+    /**
+     * get more than one thing from both (uses <)
+     */
+    public void test4(){
+    	//TODO: Set connection info for GHTorrent
+    	String mysqlHost = "localhost";
+    	String mysqlDbName = "ghtorrent";
+    	String mysqlUser = "java";
+    	String mysqlPassword = "password";
+    	String mongoHost = "";
+    	String mongoDbName = "github";
+    	String mongoUser = "";
+    	String mongoPassword = "";
+    	
+    	ResultSet actualrs = null;
+    	ResultSet expectedrs = null;
+    	List<Document> actualResults = null;
+    	List<Document> expectedResults = null;
+    	
+    	//Using Unified Builder
+    	UnifiedBuilder builder = new UnifiedBuilder();
+    	builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
+    	builder.setMongoConnectionInfo(mongoHost, mongoDbName, mongoUser, mongoPassword);
+    	builder.setCollection("users");
+    	builder.setTable("users");
+    	builder.getAttribute("name", "email", "followers"); 
+    	builder.addNumericalFilter("id", Operator.LESS_THAN, 1000, true); //might only work on mysql part as the code is right now
+    	//NOTE: I think ^ is fixed, but leaving comment just in case its not
+    	builder.build();
+    	
+    	//get results from Unified Builder
+    	try {
+			builder.execute();
+			actualrs = builder.getMySQL();
+			actualResults = builder.getMongo();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	//get mysql results standard way
+    	try {
+			Class.forName("com.mysql.jdbc.Driver"); 
+			Connection c = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + "/" + mysqlDbName 
+					+ "?user=" + mysqlUser + "&password=" + mysqlPassword);
+			Statement stmt = c.createStatement();
+			String query = "SELECT name, email FROM users WHERE id<1000"; //should be right
+			expectedrs = stmt.executeQuery(query);
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+    	//get mongo results standard way
+    	MongoClient mongoClient = new MongoClient();
+		MongoDatabase mongoDb = mongoClient.getDatabase(mongoDbName);
+		MongoCollection<Document> coll = mongoDb.getCollection("users");
+		Bson filter = lt("id", 1000);
+		Bson projection = fields(include("followers"), excludeId()); 
+		expectedResults = coll.find(filter).projection(projection).into(new ArrayList<Document>());
+    	
+    	//The parameters may be in reverse order 
+		try {
+			while(actualrs.next() && expectedrs.next()){
+				for(int i = 1; i <= 2; i++){
+					assertEquals(expectedrs.getString(i), actualrs.getString(i));
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+    	assertEquals(expectedResults, actualResults); 
+    	assertTrue(actualrs != null);
+    	assertTrue(actualResults != null);
+    	
+    }
+    /**
+     * get more than one thing from both (uses >)
+     */
+    public void test5(){
+    	//TODO: Set connection info for GHTorrent
+    	String mysqlHost = "localhost";
+    	String mysqlDbName = "ghtorrent";
+    	String mysqlUser = "java";
+    	String mysqlPassword = "password";
+    	String mongoHost = "";
+    	String mongoDbName = "github";
+    	String mongoUser = "";
+    	String mongoPassword = "";
+    	
+    	ResultSet actualrs = null;
+    	ResultSet expectedrs = null;
+    	List<Document> actualResults = null;
+    	List<Document> expectedResults = null;
+    	
+    	//Using Unified Builder
+    	UnifiedBuilder builder = new UnifiedBuilder();
+    	builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
+    	builder.setMongoConnectionInfo(mongoHost, mongoDbName, mongoUser, mongoPassword);
+    	builder.setCollection("users");
+    	builder.setTable("users");
+    	builder.getAttribute("name", "email", "followers"); 
+    	builder.addNumericalFilter("id", Operator.GREATER_THAN, 11710360, true); //might only work on mysql part as the code is right now
+    	//NOTE: I think ^ is fixed, but leaving comment just in case its not
+    	builder.build();
+    	
+    	//get results from Unified Builder
+    	try {
+			builder.execute();
+			actualrs = builder.getMySQL();
+			actualResults = builder.getMongo();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	//get mysql results standard way
+    	try {
+			Class.forName("com.mysql.jdbc.Driver"); 
+			Connection c = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + "/" + mysqlDbName 
+					+ "?user=" + mysqlUser + "&password=" + mysqlPassword);
+			Statement stmt = c.createStatement();
+			String query = "SELECT name, email FROM users WHERE id<11710360"; //should be right
+			expectedrs = stmt.executeQuery(query);
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+    	//get mongo results standard way
+    	MongoClient mongoClient = new MongoClient();
+		MongoDatabase mongoDb = mongoClient.getDatabase(mongoDbName);
+		MongoCollection<Document> coll = mongoDb.getCollection("users");
+		Bson filter = gt("id", 11710360);
+		Bson projection = fields(include("followers"), excludeId()); 
+		expectedResults = coll.find(filter).projection(projection).into(new ArrayList<Document>());
+    	
+    	//The parameters may be in reverse order 
+		try {
+			while(expectedrs.next() && actualrs.next()){
+				for(int i = 1; i <= 2; i++){
+					assertEquals(expectedrs.getString(i), actualrs.getString(i));
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+    	assertEquals(expectedResults, actualResults); 
+    	assertTrue(actualrs != null);
+    	assertTrue(actualResults != null);
     	
     }
     
     /*
      * TODO:
-     * 		Make similar test cases where I get more than one thing back from each (use < and >)
      * 		Complex filter? (use both AND and OR)
-     * 		Other databases?
-     * 		Should I be using the MySQL as feedback to search Mongo more efficiently?
      * 
      * 	These might be too much:
      * 		one with no filter, one with no projection, one to get everything(no parameters)
