@@ -60,7 +60,6 @@ public class AppTest
      * Get public repos, public gists, followers, and following from Mongo users 
      */
     public void test1(){
-    	//TODO: Set connection info for GHTorrent
     	String mongoHost = "";
     	String mongoDbName = "github";
     	String mongoUser = "";
@@ -102,7 +101,6 @@ public class AppTest
      * Gets name, email company, and location from MySQL users
      */
     public void test2(){
-    	//TODO: Set connection info for GHTorrent
     	String mysqlHost = "localhost:3306";
     	String mysqlDbName = "ghtorrent";
     	String mysqlUser = "java";
@@ -151,7 +149,6 @@ public class AppTest
 			}
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	assertTrue(actualrs != null);
@@ -163,7 +160,7 @@ public class AppTest
      */
 
     public void test3(){
-    	//TODO: Set connection info for GHTorrent
+    	
     	String mysqlHost = "localhost";
     	String mysqlDbName = "ghtorrent";
     	String mysqlUser = "java";
@@ -225,7 +222,6 @@ public class AppTest
 				}
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -238,7 +234,6 @@ public class AppTest
      * get more than one thing from both (uses <)
      */
     public void test4(){
-    	//TODO: Set connection info for GHTorrent
     	String mysqlHost = "localhost";
     	String mysqlDbName = "ghtorrent";
     	String mysqlUser = "java";
@@ -300,7 +295,6 @@ public class AppTest
 				}
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -313,7 +307,6 @@ public class AppTest
      * get more than one thing from both (uses >)
      */
     public void test5(){
-    	//TODO: Set connection info for GHTorrent
     	String mysqlHost = "localhost";
     	String mysqlDbName = "ghtorrent";
     	String mysqlUser = "java";
@@ -353,7 +346,7 @@ public class AppTest
 			Connection c = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + "/" + mysqlDbName 
 					+ "?user=" + mysqlUser + "&password=" + mysqlPassword);
 			Statement stmt = c.createStatement();
-			String query = "SELECT name, email FROM users WHERE id<11710360"; //should be right
+			String query = "SELECT name, email FROM users WHERE id>11710360"; //should be right
 			expectedrs = stmt.executeQuery(query);
 			
 		} catch(Exception e){
@@ -375,7 +368,229 @@ public class AppTest
 				}
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+    	assertEquals(expectedResults, actualResults); 
+    	assertTrue(actualrs != null);
+    	assertTrue(actualResults != null);
+    	
+    }
+    /**
+     * Use AND to get a range of values 
+     */
+    public void test6(){
+    	String mysqlHost = "localhost";
+    	String mysqlDbName = "ghtorrent";
+    	String mysqlUser = "java";
+    	String mysqlPassword = "password";
+    	String mongoHost = "";
+    	String mongoDbName = "github";
+    	String mongoUser = "";
+    	String mongoPassword = "";
+    	
+    	ResultSet actualrs = null;
+    	ResultSet expectedrs = null;
+    	List<Document> actualResults = null;
+    	List<Document> expectedResults = null;
+    	
+    	//Using Unified Builder
+    	UnifiedBuilder builder = new UnifiedBuilder();
+    	builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
+    	builder.setMongoConnectionInfo(mongoHost, mongoDbName, mongoUser, mongoPassword);
+    	builder.setCollection("users");
+    	builder.setTable("users");
+    	builder.getAttribute("name", "email", "followers"); 
+    	builder.addNumericalFilter("id", Operator.GREATER_THAN, 738000, true);
+    	builder.addNumericalFilter("id", Operator.LESS_THAN, 739000, true);
+    	builder.build();
+    	
+    	//get results from Unified Builder
+    	try {
+			builder.execute();
+			actualrs = builder.getMySQL();
+			actualResults = builder.getMongo();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	//get mysql results standard way
+    	try {
+			Class.forName("com.mysql.jdbc.Driver"); 
+			Connection c = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + "/" + mysqlDbName 
+					+ "?user=" + mysqlUser + "&password=" + mysqlPassword);
+			Statement stmt = c.createStatement();
+			String query = "SELECT name, email FROM users WHERE id<739000 AND id>738000"; //should be right
+			expectedrs = stmt.executeQuery(query);
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+    	//get mongo results standard way
+    	MongoClient mongoClient = new MongoClient();
+		MongoDatabase mongoDb = mongoClient.getDatabase(mongoDbName);
+		MongoCollection<Document> coll = mongoDb.getCollection("users");
+		Bson filter = and(gt("id", 738000), lt("id", 739000));
+		Bson projection = fields(include("followers"), excludeId()); 
+		expectedResults = coll.find(filter).projection(projection).into(new ArrayList<Document>());
+    	
+    	//The parameters may be in reverse order 
+		try {
+			while(expectedrs.next() && actualrs.next()){
+				for(int i = 1; i <= 2; i++){
+					assertEquals(expectedrs.getString(i), actualrs.getString(i));
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+    	assertEquals(expectedResults, actualResults); 
+    	assertTrue(actualrs != null);
+    	assertTrue(actualResults != null);
+    	
+    }
+    
+    /**
+     * Use OR to get a range of values 
+     */
+    public void test7(){
+    	String mysqlHost = "localhost";
+    	String mysqlDbName = "ghtorrent";
+    	String mysqlUser = "java";
+    	String mysqlPassword = "password";
+    	String mongoHost = "";
+    	String mongoDbName = "github";
+    	String mongoUser = "";
+    	String mongoPassword = "";
+    	
+    	ResultSet actualrs = null;
+    	ResultSet expectedrs = null;
+    	List<Document> actualResults = null;
+    	List<Document> expectedResults = null;
+    	
+    	//Using Unified Builder
+    	UnifiedBuilder builder = new UnifiedBuilder();
+    	builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
+    	builder.setMongoConnectionInfo(mongoHost, mongoDbName, mongoUser, mongoPassword);
+    	builder.setCollection("users");
+    	builder.setTable("users");
+    	builder.getAttribute("name", "email", "followers"); 
+    	builder.addNumericalFilter("id", Operator.GREATER_THAN, 11710360, false);
+    	builder.addNumericalFilter("id", Operator.LESS_THAN, 1000, false);
+    	builder.build();
+    	
+    	//get results from Unified Builder
+    	try {
+			builder.execute();
+			actualrs = builder.getMySQL();
+			actualResults = builder.getMongo();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	//get mysql results standard way
+    	try {
+			Class.forName("com.mysql.jdbc.Driver"); 
+			Connection c = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + "/" + mysqlDbName 
+					+ "?user=" + mysqlUser + "&password=" + mysqlPassword);
+			Statement stmt = c.createStatement();
+			String query = "SELECT name, email FROM users WHERE id>11710360 OR id<1000"; //should be right
+			expectedrs = stmt.executeQuery(query);
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+    	//get mongo results standard way
+    	MongoClient mongoClient = new MongoClient();
+		MongoDatabase mongoDb = mongoClient.getDatabase(mongoDbName);
+		MongoCollection<Document> coll = mongoDb.getCollection("users");
+		Bson filter = or(gt("id", 11710360), lt("id", 1000));
+		Bson projection = fields(include("followers"), excludeId()); 
+		expectedResults = coll.find(filter).projection(projection).into(new ArrayList<Document>());
+    	
+    	//The parameters may be in reverse order 
+		try {
+			while(expectedrs.next() && actualrs.next()){
+				for(int i = 1; i <= 2; i++){
+					assertEquals(expectedrs.getString(i), actualrs.getString(i));
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+    	assertEquals(expectedResults, actualResults); 
+    	assertTrue(actualrs != null);
+    	assertTrue(actualResults != null);
+    	
+    }
+    
+    /**
+     * Use both AND and OR to get a range of values 
+     */
+    public void test8(){
+    	String mysqlHost = "localhost";
+    	String mysqlDbName = "ghtorrent";
+    	String mysqlUser = "java";
+    	String mysqlPassword = "password";
+    	String mongoHost = "";
+    	String mongoDbName = "github";
+    	String mongoUser = "";
+    	String mongoPassword = "";
+    	
+    	ResultSet actualrs = null;
+    	ResultSet expectedrs = null;
+    	List<Document> actualResults = null;
+    	List<Document> expectedResults = null;
+    	
+    	//Using Unified Builder
+    	UnifiedBuilder builder = new UnifiedBuilder();
+    	builder.setMysqlConnectionInfo(mysqlHost, mysqlDbName, mysqlUser, mysqlPassword);
+    	builder.setMongoConnectionInfo(mongoHost, mongoDbName, mongoUser, mongoPassword);
+    	builder.setCollection("users");
+    	builder.setTable("users");
+    	builder.getAttribute("name", "email", "followers");
+    	builder.addNumericalFilter("id", Operator.LESS_THAN, 739000, true);
+    	builder.addNumericalFilter("id", Operator.GREATER_THAN, 738000, true);
+    	builder.addNumericalFilter("id", Operator.GREATER_THAN, 11710360, false);
+    	builder.addNumericalFilter("id", Operator.LESS_THAN, 1000, false);
+    	builder.build();
+    	
+    	//get results from Unified Builder
+    	try {
+			builder.execute();
+			actualrs = builder.getMySQL();
+			actualResults = builder.getMongo();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	//get mysql results standard way
+    	try {
+			Class.forName("com.mysql.jdbc.Driver"); 
+			Connection c = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + "/" + mysqlDbName 
+					+ "?user=" + mysqlUser + "&password=" + mysqlPassword);
+			Statement stmt = c.createStatement();
+			String query = "SELECT name, email FROM users WHERE id<739000 AND id>738000 OR id>11710360 OR id<1000"; //should be right
+			expectedrs = stmt.executeQuery(query);
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+    	//get mongo results standard way
+    	MongoClient mongoClient = new MongoClient();
+		MongoDatabase mongoDb = mongoClient.getDatabase(mongoDbName);
+		MongoCollection<Document> coll = mongoDb.getCollection("users");
+		Bson filter = or(gt("id", 11710360), lt("id", 1000), and(gt("id", 738000), lt("id", 739000)));
+		Bson projection = fields(include("followers"), excludeId()); 
+		expectedResults = coll.find(filter).projection(projection).into(new ArrayList<Document>());
+    	
+    	//The parameters may be in reverse order 
+		try {
+			while(expectedrs.next() && actualrs.next()){
+				for(int i = 1; i <= 2; i++){
+					assertEquals(expectedrs.getString(i), actualrs.getString(i));
+				}
+			}
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
@@ -387,7 +602,6 @@ public class AppTest
     
     /*
      * TODO:
-     * 		Complex filter? (use both AND and OR)
      * 
      * 	These might be too much:
      * 		one with no filter, one with no projection, one to get everything(no parameters)
